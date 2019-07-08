@@ -7,7 +7,7 @@ import (
 	"net/http"
 )
 
-type CMSClient struct {
+type Client struct {
 	BaseUrl     string
 	JWTToken    []byte
 	httpClientP *http.Client
@@ -18,14 +18,14 @@ var (
 	ErrSignCSRFailed   = errors.New("Failed to sign certificate with CMS")
 )
 
-func (c *CMSClient) httpClient() *http.Client {
+func (c *Client) httpClient() *http.Client {
 	if c.httpClientP == nil {
 		c.httpClientP = &http.Client{}
 	}
 	return c.httpClientP
 }
 
-func (c *CMSClient) GetRootCA() (string, error) {
+func (c *Client) GetRootCA() (string, error) {
 
 	url, err := clients.ResolvePath(c.BaseUrl, "cms/v1/ca-certificates")
 	req, _ := http.NewRequest(http.MethodGet, url, nil)
@@ -43,7 +43,7 @@ func (c *CMSClient) GetRootCA() (string, error) {
 	return resStr, nil
 }
 
-func (c *CMSClient) PostCSR(csr []byte) (string, error) {
+func (c *Client) PostCSR(csr []byte) (string, error) {
 
 	url, err := clients.ResolvePath(c.BaseUrl, "cms/v1/certificates")
 	req, _ := http.NewRequest(http.MethodPost, url, bytes.NewBuffer(csr))
