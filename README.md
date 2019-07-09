@@ -30,3 +30,10 @@ Please follow the elaborated repository structure when designing new components
 - applications
     - depends on clients for accessing services
     - depends on lib-common for shared types
+
+# summary
+
+services | client code status | sharing custom types
+---------|--------------------|------------
+cms      | implemented  |  no
+aas      | implemented  |  yes
