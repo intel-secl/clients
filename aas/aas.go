@@ -151,7 +151,8 @@ func (c *Client) CreateRole(r sharedTypes.RoleCreate) (*sharedTypes.RoleCreateRe
 		return nil, fmt.Errorf("Failed to create dispatch request: %v", err)
 	}
 	if rsp.StatusCode != http.StatusCreated {
-		return nil, fmt.Errorf("Failed to create role: HTTP Code: %d", rsp.StatusCode)
+		msg, _ := ioutil.ReadAll(rsp.Body)
+		return nil, fmt.Errorf("Failed to create role: HTTP Code: %d: Response Message: %s", rsp.StatusCode, msg)
 	}
 	var roleCreateResponse sharedTypes.RoleCreateResponse
 	err = json.NewDecoder(rsp.Body).Decode(&roleCreateResponse)
