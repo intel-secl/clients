@@ -16,12 +16,12 @@ type UserClientErr struct {
 }
 
 func (ucErr *UserClientErr) Error() string {
-	return fmt.Sprintf("%s: http error %d", ucErr.ErrMessage, ucErr.ErrCode)
+	return fmt.Sprintf("%s: http status %d", ucErr.ErrMessage, ucErr.ErrCode)
 }
 
 var (
-	ErrFailedToGetJWTCert  = &UserClientErr{ErrMessage: "failed to retrieve JWT signing certificate"}
-	ErrFailedToGetJWTToken = &UserClientErr{ErrMessage: "failed to retrieve JWT token"}
+	ErrFailedToGetJWTCert  = &UserClientErr{"failed to retrieve JWT signing certificate", 0}
+	ErrFailedToGetJWTToken = &UserClientErr{"failed to retrieve JWT token", 0}
 )
 
 type UserClient struct {
@@ -59,24 +59,23 @@ func (c *UserClient) GetJwtSigningCert() ([]byte, error) {
 }
 
 func (c *UserClient) GetJwtToken() ([]byte, error) {
+
 	jwtUrl, err := resolvePath(c.BaseURL, "token")
 	if err != nil {
 		return nil, err
 	}
-	buf := new(bytes.Buffer)
-
 	if c.userCred == nil {
 		c.userCred = &types.UserCred{
 			UserName: c.Username,
 			Password: c.Password,
 		}
 	}
+	buf := new(bytes.Buffer)
 	err = json.NewEncoder(buf).Encode(c.userCred)
 	if err != nil {
 		return nil, err
 	}
 	req, _ := http.NewRequest("POST", jwtUrl, buf)
-
 	req.Header.Set("Accept", "application/jwt")
 
 	if c.HTTPClient == nil {

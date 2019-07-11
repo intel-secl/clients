@@ -12,11 +12,13 @@ type AdminClientErr struct {
 }
 
 func (ucErr *AdminClientErr) Error() string {
-	return fmt.Sprintf("%s: http error %d", ucErr.ErrMessage, ucErr.ErrCode)
+	return fmt.Sprintf("%s: http status %d", ucErr.ErrMessage, ucErr.ErrCode)
 }
 
 var (
-	ErrAdmin = &AdminClientErr{ErrMessage: "failed to retrieve JWT signing certificate"}
+	ErrCreateUser    = &AdminClientErr{ErrMessage: "failed to add user"}
+	ErrCreateRole    = &AdminClientErr{ErrMessage: "failed to add role"}
+	ErrAddRoleToUser = &AdminClientErr{ErrMessage: "failed adding role to user"}
 )
 
 type AdminClient struct {
@@ -27,11 +29,21 @@ type AdminClient struct {
 
 	HTTPClient *http.Client
 
-	userCred types.UserCred
+	userCred *types.UserCred
 }
 
-// func (c *Client) CreateUser(u sharedTypes.UserCreate) (*sharedTypes.UserCreateResponse, error) {
-// 	userURL, err := c.resolvePath("users")
+// func (c *AdminClient) prepRequest(req *http.Request) (*http.Response, error) {
+
+// 	if c.userCred == nil {
+// 		c.userCred = &types.UserCred{
+// 			UserName: c.Username,
+// 			Password: c.Password,
+// 		}
+// 	}
+// }
+
+// func (c *AdminClient) CreateUser(u types.UserCreate) (*types.UserCreateResponse, error) {
+// 	userURL, err := resolvePath(c.BaseURL, "users")
 // 	if err != nil {
 // 		return nil, err
 // 	}
@@ -56,7 +68,7 @@ type AdminClient struct {
 // 	if rsp.StatusCode != http.StatusCreated {
 // 		return nil, fmt.Errorf("Failed to create user: HTTP Code: %d", rsp.StatusCode)
 // 	}
-// 	var userCreateResponse sharedTypes.UserCreateResponse
+// 	var userCreateResponse types.UserCreateResponse
 // 	err = json.NewDecoder(rsp.Body).Decode(&userCreateResponse)
 // 	if err != nil {
 // 		return nil, err
@@ -65,9 +77,9 @@ type AdminClient struct {
 // }
 
 // // CreateRole is used to create role in aas
-// func (c *Client) CreateRole(r sharedTypes.RoleCreate) (*sharedTypes.RoleCreateResponse, error) {
+// func (c *AdminClient) CreateRole(r types.RoleCreate) (*types.RoleCreateResponse, error) {
 
-// 	roleURL, _ := c.resolvePath("roles")
+// 	roleURL, _ := resolvePath(c.BaseURL, "roles")
 
 // 	payload, err := json.Marshal(&r)
 // 	if err != nil {
@@ -88,7 +100,7 @@ type AdminClient struct {
 // 	if rsp.StatusCode != http.StatusCreated {
 // 		return nil, fmt.Errorf("Failed to create role: HTTP Code: %d", rsp.StatusCode)
 // 	}
-// 	var roleCreateResponse sharedTypes.RoleCreateResponse
+// 	var roleCreateResponse types.RoleCreateResponse
 // 	err = json.NewDecoder(rsp.Body).Decode(&roleCreateResponse)
 // 	if err != nil {
 // 		return nil, err
@@ -97,8 +109,8 @@ type AdminClient struct {
 // }
 
 // // CreateRole is used to create role in aas
-// func (c *Client) AddRoleToUser(userID string, r sharedTypes.UserRoleCreate) error {
-// 	reqURL, err := c.resolvePath("users" + userID + "roles")
+// func (c *AdminClient) AddRoleToUser(userID string, r types.UserRoleCreate) error {
+// 	reqURL, err := resolvePath(c.BaseURL, "users"+userID+"roles")
 // 	if err != nil {
 // 		return err
 // 	}
