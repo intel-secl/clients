@@ -6,22 +6,22 @@ import (
 	"net/http"
 )
 
-type AdminClientErr struct {
+type ClientErr struct {
 	ErrMessage string
 	ErrCode    int
 }
 
-func (ucErr *AdminClientErr) Error() string {
+func (ucErr *ClientErr) Error() string {
 	return fmt.Sprintf("%s: http status %d", ucErr.ErrMessage, ucErr.ErrCode)
 }
 
 var (
-	ErrCreateUser    = &AdminClientErr{ErrMessage: "failed to add user"}
-	ErrCreateRole    = &AdminClientErr{ErrMessage: "failed to add role"}
-	ErrAddRoleToUser = &AdminClientErr{ErrMessage: "failed adding role to user"}
+	ErrCreateUser    = &ClientErr{ErrMessage: "failed to add user"}
+	ErrCreateRole    = &ClientErr{ErrMessage: "failed to add role"}
+	ErrAddRoleToUser = &ClientErr{ErrMessage: "failed adding role to user"}
 )
 
-type AdminClient struct {
+type Client struct {
 	BaseURL  string
 	Username string
 	Password string

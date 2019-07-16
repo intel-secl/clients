@@ -2,6 +2,7 @@ package aas
 
 import (
 	"bytes"
+	"errors"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -20,22 +21,24 @@ func (ucErr *UserClientErr) Error() string {
 }
 
 var (
-	ErrFailedToGetJWTCert  = &UserClientErr{"failed to retrieve JWT signing certificate", 0}
-	ErrFailedToGetJWTToken = &UserClientErr{"failed to retrieve JWT token", 0}
+	ErrFailedToGetJWTCert  = &UserClientErr{"Failed to retrieve JWT signing certificate", 0}
+	ErrFailedToFetchJWTToken = &UserClientErr{"Failed to retrieve JWT token from aas", 0}
+	ErrJWTNotYetFetched  = errors.New("No JWT token cached")
 )
 
-type UserClient struct {
+type JWTClient struct {
 	BaseURL  string
 	Username string
 	Password string
-	JWTToken []byte
+
+	jwtToken      []byte
+	jwtExpireTime int64
 
 	HTTPClient *http.Client
-
-	userCred *types.UserCred
+	userCred   *types.UserCred
 }
 
-func (c *UserClient) GetJwtSigningCert() ([]byte, error) {
+func (c *JWTClient) GetJWTSigningCert() ([]byte, error) {
 
 	jwtCertUrl, err := resolvePath(c.BaseURL, "noauth/jwtCert")
 	if err != nil {
@@ -58,7 +61,15 @@ func (c *UserClient) GetJwtSigningCert() ([]byte, error) {
 	return ioutil.ReadAll(rsp.Body)
 }
 
-func (c *UserClient) GetJwtToken() ([]byte, error) {
+func (c *JWTClient) GetJWTToken() ([]byte, error) {
+
+	if c.jwtToken != nil {
+		return c.jwtToken, nil
+	}
+	return nil, ErrJWTNotYetFetched
+}
+
+func (c *JWTClient) FetchJWTToken() ([]byte, error) {
 
 	jwtUrl, err := resolvePath(c.BaseURL, "token")
 	if err != nil {
@@ -86,8 +97,12 @@ func (c *UserClient) GetJwtToken() ([]byte, error) {
 		return nil, err
 	}
 	if rsp.StatusCode != http.StatusOK {
-		ErrFailedToGetJWTToken.ErrCode = rsp.StatusCode
-		return nil, ErrFailedToGetJWTToken
+		ErrFailedToFetchJWTToken.ErrCode = rsp.StatusCode
+		return nil, ErrFailedToFetchJWTToken
 	}
-	return ioutil.ReadAll(rsp.Body)
+	c.jwtToken, err = ioutil.ReadAll(rsp.Body)
+	if err != nil {
+		return nil, err
+	}
+	return c.jwtToken, nil
 }
