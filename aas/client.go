@@ -1,26 +1,34 @@
 package aas
 
 import (
-	"fmt"
 	types "intel/isecl/lib/common/types/aas"
 	"net/http"
 )
 
 type Client struct {
-	BaseURL  string
-	JWTToken []byte
+	BaseURL     string
+	JWTToken    []byte
 	httpClientP *http.Client
 }
 
-// func (c *AdminClient) prepRequest(req *http.Request) (*http.Response, error) {
+func (c *Client) addTokenToRequest(req *http.Request) {
+	req.Header.Add("Authorization", "Bearer "+string(c.JWTToken))
+}
 
-// 	if c.userCred == nil {
-// 		c.userCred = &types.UserCred{
-// 			UserName: c.Username,
-// 			Password: c.Password,
-// 		}
-// 	}
-// }
+func (c *Client) CreateUser(u types.UserCreate) (*types.UserCreateResponse, error) {
+
+	return nil, nil
+}
+
+func (c *Client) CreateRole(r types.RoleCreate) (*types.RoleCreateResponse, error) {
+
+	return nil, nil
+}
+
+func (c *Client) AddRoleToUser(userID string, r types.UserRoleCreate) error {
+
+	return nil
+}
 
 // func (c *AdminClient) CreateUser(u types.UserCreate) (*types.UserCreateResponse, error) {
 // 	userURL, err := resolvePath(c.BaseURL, "users")

@@ -2,12 +2,12 @@ package aas
 
 import (
 	"bytes"
-	"errors"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"net/http"
 
+	"intel/isecl/lib/clients"
 	types "intel/isecl/lib/common/types/aas"
 )
 
@@ -21,24 +21,36 @@ func (ucErr *JWTClientErr) Error() string {
 }
 
 var (
-	ErrHTTPGetJWTCert  = &HTTPClientErr{"Failed to retrieve JWT signing certificate", 0}
-	ErrHTTPFetchJWTToken = &HTTPClientErr{"Failed to retrieve JWT token from aas", 0}
-
-	ErrUserNotFound  = &JWTClientErr{"User name not registered", ""}
-	ErrJWTNotYetFetched  = &JWTClientErr{"User token not yet fetched", ""}
+	ErrHTTPGetJWTCert = &clients.HTTPClientErr{
+		ErrMessage: "Failed to retrieve JWT signing certificate",
+		ErrCode:    0,
+	}
+	ErrHTTPFetchJWTToken = &clients.HTTPClientErr{
+		ErrMessage: "Failed to retrieve JWT token from aas",
+		ErrCode:    0,
+	}
+	ErrUserNotFound = &JWTClientErr{
+		ErrMessage: "User name not registered",
+		ErrInfo:    "",
+	}
+	ErrJWTNotYetFetched = &JWTClientErr{
+		ErrMessage: "User token not yet fetched",
+		ErrInfo:    "",
+	}
 )
 
 type JWTClient struct {
-	BaseURL  string
+	BaseURL        string
+	NoTLSKeyVerify bool
 
 	httpClientP *http.Client
-	users map[string]*types.UserCred
-	tokens map[string][]byte
+	users       map[string]*types.UserCred
+	tokens      map[string][]byte
 }
 
 func (c *JWTClient) GetJWTSigningCert() ([]byte, error) {
 
-	jwtCertUrl, err := resolvePath(c.BaseURL, "noauth/jwtCert")
+	jwtCertUrl, err := clients.ResolvePath(c.BaseURL, "noauth/jwtCert")
 	if err != nil {
 		return nil, err
 	}
@@ -46,21 +58,25 @@ func (c *JWTClient) GetJWTSigningCert() ([]byte, error) {
 	req.Header.Set("Accept", "application/x-pem-file")
 
 	if c.httpClientP == nil {
-		c.httpClientP = httpClient()
+		if c.NoTLSKeyVerify {
+			c.httpClientP = clients.HTTPClientTLSNoVerify()
+		} else {
+			c.httpClientP = clients.HTTPClient()
+		}
 	}
 	rsp, err := c.httpClientP.Do(req)
 	if err != nil {
 		return nil, err
 	}
 	if rsp.StatusCode != http.StatusOK {
-		ErrFailedToGetJWTCert.ErrCode = rsp.StatusCode
-		return nil, ErrFailedToGetJWTCert
+		ErrHTTPGetJWTCert.ErrCode = rsp.StatusCode
+		return nil, ErrHTTPGetJWTCert
 	}
 	return ioutil.ReadAll(rsp.Body)
 }
 
 func (c *JWTClient) AddUser(username, password string) {
-	users[username] = &types.UserCred{
+	c.users[username] = &types.UserCred{
 		UserName: username,
 		Password: password,
 	}
@@ -72,18 +88,18 @@ func (c *JWTClient) GetUserToken(username string) ([]byte, error) {
 		ErrUserNotFound.ErrInfo = username
 		return nil, ErrUserNotFound
 	}
-	token, ok := tokens[username]
+	token, ok := c.tokens[username]
 	if ok {
 		return token, nil
-	} 
+	}
 	ErrJWTNotYetFetched.ErrInfo = username
 	return nil, ErrJWTNotYetFetched
 }
 
-func (c *JWTClient) FetchAllTokens(username string) error {
+func (c *JWTClient) FetchAllTokens() error {
 
-	for user, userCred := c.users {
-		token, err := fetchToken(userCred)
+	for user, userCred := range c.users {
+		token, err := c.fetchToken(userCred)
 		if err != nil {
 			return err
 		}
@@ -108,7 +124,7 @@ func (c *JWTClient) FetchTokenForUser(username string) ([]byte, error) {
 
 func (c *JWTClient) fetchToken(userCred *types.UserCred) ([]byte, error) {
 
-	jwtUrl, err := resolvePath(c.BaseURL, "token")
+	jwtUrl, err := clients.ResolvePath(c.BaseURL, "token")
 	if err != nil {
 		return nil, err
 	}
@@ -121,15 +137,19 @@ func (c *JWTClient) fetchToken(userCred *types.UserCred) ([]byte, error) {
 	req.Header.Set("Accept", "application/jwt")
 
 	if c.httpClientP == nil {
-		c.httpClientP = httpClient()
+		if c.NoTLSKeyVerify {
+			c.httpClientP = clients.HTTPClientTLSNoVerify()
+		} else {
+			c.httpClientP = clients.HTTPClient()
+		}
 	}
 	rsp, err := c.httpClientP.Do(req)
 	if err != nil {
 		return nil, err
 	}
 	if rsp.StatusCode != http.StatusOK {
-		ErrFailedToFetchJWTToken.ErrCode = rsp.StatusCode
-		return nil, ErrFailedToFetchJWTToken
+		ErrHTTPFetchJWTToken.ErrCode = rsp.StatusCode
+		return nil, ErrHTTPFetchJWTToken
 	}
 	jwtToken, err := ioutil.ReadAll(rsp.Body)
 	if err != nil {
