@@ -4,7 +4,6 @@ import (
 	"crypto/tls"
 	"fmt"
 	"net/http"
-	"net/url"
 )
 
 type HTTPClientErr struct {
@@ -28,11 +27,6 @@ func HTTPClientTLSNoVerify() *http.Client {
 	}
 }
 
-func ResolvePath(baseURLIn, path string) (string, error) {
-	baseURL, err := url.Parse(baseURLIn)
-	if err != nil {
-		return "", err
-	}
-	rel := baseURL.ResolveReference(&url.URL{Path: path})
-	return rel.String(), err
+func ResolvePath(baseURL, path string) string {
+	return baseURL + "/" + path
 }
