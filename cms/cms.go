@@ -33,7 +33,7 @@ func (c *Client) httpClient() *http.Client {
 
 func (c *Client) GetRootCA() (string, error) {
 
-	url, err := clients.ResolvePath(c.BaseURL, "cms/v1/ca-certificates")
+	url := clients.ResolvePath(c.BaseURL, "cms/v1/ca-certificates")
 	req, _ := http.NewRequest(http.MethodGet, url, nil)
 	req.Header.Set("Accept", "application/x-pem-file")
 	rsp, err := c.httpClient().Do(req)
@@ -51,7 +51,7 @@ func (c *Client) GetRootCA() (string, error) {
 
 func (c *Client) PostCSR(csr []byte) (string, error) {
 
-	url, err := clients.ResolvePath(c.BaseURL, "cms/v1/certificates")
+	url := clients.ResolvePath(c.BaseURL, "cms/v1/certificates")
 	req, _ := http.NewRequest(http.MethodPost, url, bytes.NewBuffer(csr))
 
 	req.Header.Set("Accept", "application/x-pem-file")
