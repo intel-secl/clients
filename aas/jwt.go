@@ -11,31 +11,29 @@ import (
 	types "intel/isecl/lib/common/types/aas"
 )
 
-type UserClientErr struct {
+type JWTClientErr struct {
 	ErrMessage string
-	ErrCode    int
+	ErrInfo    string
 }
 
-func (ucErr *UserClientErr) Error() string {
-	return fmt.Sprintf("%s: http status %d", ucErr.ErrMessage, ucErr.ErrCode)
+func (ucErr *JWTClientErr) Error() string {
+	return fmt.Sprintf("%s: %s", ucErr.ErrMessage, ucErr.ErrInfo)
 }
 
 var (
-	ErrFailedToGetJWTCert  = &UserClientErr{"Failed to retrieve JWT signing certificate", 0}
-	ErrFailedToFetchJWTToken = &UserClientErr{"Failed to retrieve JWT token from aas", 0}
-	ErrJWTNotYetFetched  = errors.New("No JWT token cached")
+	ErrHTTPGetJWTCert  = &HTTPClientErr{"Failed to retrieve JWT signing certificate", 0}
+	ErrHTTPFetchJWTToken = &HTTPClientErr{"Failed to retrieve JWT token from aas", 0}
+
+	ErrUserNotFound  = &JWTClientErr{"User name not registered", ""}
+	ErrJWTNotYetFetched  = &JWTClientErr{"User token not yet fetched", ""}
 )
 
 type JWTClient struct {
 	BaseURL  string
-	Username string
-	Password string
 
-	jwtToken      []byte
-	jwtExpireTime int64
-
-	HTTPClient *http.Client
-	userCred   *types.UserCred
+	httpClientP *http.Client
+	users map[string]*types.UserCred
+	tokens map[string][]byte
 }
 
 func (c *JWTClient) GetJWTSigningCert() ([]byte, error) {
@@ -47,10 +45,10 @@ func (c *JWTClient) GetJWTSigningCert() ([]byte, error) {
 	req, _ := http.NewRequest(http.MethodGet, jwtCertUrl, nil)
 	req.Header.Set("Accept", "application/x-pem-file")
 
-	if c.HTTPClient == nil {
-		c.HTTPClient = &http.Client{}
+	if c.httpClientP == nil {
+		c.httpClientP = httpClient()
 	}
-	rsp, err := c.HTTPClient.Do(req)
+	rsp, err := c.httpClientP.Do(req)
 	if err != nil {
 		return nil, err
 	}
@@ -61,38 +59,71 @@ func (c *JWTClient) GetJWTSigningCert() ([]byte, error) {
 	return ioutil.ReadAll(rsp.Body)
 }
 
-func (c *JWTClient) GetJWTToken() ([]byte, error) {
-
-	if c.jwtToken != nil {
-		return c.jwtToken, nil
+func (c *JWTClient) AddUser(username, password string) {
+	users[username] = &types.UserCred{
+		UserName: username,
+		Password: password,
 	}
+}
+
+func (c *JWTClient) GetUserToken(username string) ([]byte, error) {
+
+	if _, ok := c.users[username]; !ok {
+		ErrUserNotFound.ErrInfo = username
+		return nil, ErrUserNotFound
+	}
+	token, ok := tokens[username]
+	if ok {
+		return token, nil
+	} 
+	ErrJWTNotYetFetched.ErrInfo = username
 	return nil, ErrJWTNotYetFetched
 }
 
-func (c *JWTClient) FetchJWTToken() ([]byte, error) {
+func (c *JWTClient) FetchAllTokens(username string) error {
+
+	for user, userCred := c.users {
+		token, err := fetchToken(userCred)
+		if err != nil {
+			return err
+		}
+		c.tokens[user] = token
+	}
+	return nil
+}
+
+func (c *JWTClient) FetchTokenForUser(username string) ([]byte, error) {
+
+	userCred, ok := c.users[username]
+	if !ok {
+		return nil, ErrUserNotFound
+	}
+	token, err := c.fetchToken(userCred)
+	if err != nil {
+		return nil, err
+	}
+	c.tokens[username] = token
+	return token, nil
+}
+
+func (c *JWTClient) fetchToken(userCred *types.UserCred) ([]byte, error) {
 
 	jwtUrl, err := resolvePath(c.BaseURL, "token")
 	if err != nil {
 		return nil, err
 	}
-	if c.userCred == nil {
-		c.userCred = &types.UserCred{
-			UserName: c.Username,
-			Password: c.Password,
-		}
-	}
 	buf := new(bytes.Buffer)
-	err = json.NewEncoder(buf).Encode(c.userCred)
+	err = json.NewEncoder(buf).Encode(userCred)
 	if err != nil {
 		return nil, err
 	}
 	req, _ := http.NewRequest("POST", jwtUrl, buf)
 	req.Header.Set("Accept", "application/jwt")
 
-	if c.HTTPClient == nil {
-		c.HTTPClient = &http.Client{}
+	if c.httpClientP == nil {
+		c.httpClientP = httpClient()
 	}
-	rsp, err := c.HTTPClient.Do(req)
+	rsp, err := c.httpClientP.Do(req)
 	if err != nil {
 		return nil, err
 	}
@@ -100,9 +131,9 @@ func (c *JWTClient) FetchJWTToken() ([]byte, error) {
 		ErrFailedToFetchJWTToken.ErrCode = rsp.StatusCode
 		return nil, ErrFailedToFetchJWTToken
 	}
-	c.jwtToken, err = ioutil.ReadAll(rsp.Body)
+	jwtToken, err := ioutil.ReadAll(rsp.Body)
 	if err != nil {
 		return nil, err
 	}
-	return c.jwtToken, nil
+	return jwtToken, nil
 }
