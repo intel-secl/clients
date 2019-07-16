@@ -6,30 +6,10 @@ import (
 	"net/http"
 )
 
-type ClientErr struct {
-	ErrMessage string
-	ErrCode    int
-}
-
-func (ucErr *ClientErr) Error() string {
-	return fmt.Sprintf("%s: http status %d", ucErr.ErrMessage, ucErr.ErrCode)
-}
-
-var (
-	ErrCreateUser    = &ClientErr{ErrMessage: "failed to add user"}
-	ErrCreateRole    = &ClientErr{ErrMessage: "failed to add role"}
-	ErrAddRoleToUser = &ClientErr{ErrMessage: "failed adding role to user"}
-)
-
 type Client struct {
 	BaseURL  string
-	Username string
-	Password string
 	JWTToken []byte
-
-	HTTPClient *http.Client
-
-	userCred *types.UserCred
+	httpClientP *http.Client
 }
 
 // func (c *AdminClient) prepRequest(req *http.Request) (*http.Response, error) {

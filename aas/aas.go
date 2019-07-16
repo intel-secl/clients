@@ -6,13 +6,17 @@ import (
 	"net/url"
 )
 
-func httpClientNoTLS() *http.Client {
+type HTTPClientErr struct {
+	ErrMessage string
+	ErrCode    int
+}
 
-	return &http.Client{
-		Transport: &http.Transport{
-			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
-		},
-	}
+func (ucErr *ClientErr) Error() string {
+	return fmt.Sprintf("%s: http status %d", ucErr.ErrMessage, ucErr.ErrCode)
+}
+
+func httpClient()*http.Client {
+	return &http.Client{}
 }
 
 func resolvePath(baseURLIn, path string) (string, error) {
