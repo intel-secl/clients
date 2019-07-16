@@ -2,15 +2,16 @@ package cms
 
 import (
 	"bytes"
+	"crypto/tls"
 	"errors"
 	"intel/isecl/lib/clients"
 	"net/http"
 )
 
 type Client struct {
-	BaseUrl     string
-	JWTToken    []byte
-	httpClientP *http.Client
+	BaseURL    string
+	JWTToken   []byte
+	HTTPClient *http.Client
 }
 
 var (
@@ -19,15 +20,20 @@ var (
 )
 
 func (c *Client) httpClient() *http.Client {
-	if c.httpClientP == nil {
-		c.httpClientP = &http.Client{}
+	if c.HTTPClient == nil {
+		tlsConfig := tls.Config{}
+		tlsConfig.InsecureSkipVerify = true
+		transport := http.Transport{
+			TLSClientConfig: &tlsConfig,
+		}
+		c.HTTPClient = &http.Client{Transport: &transport}
 	}
-	return c.httpClientP
+	return c.HTTPClient
 }
 
 func (c *Client) GetRootCA() (string, error) {
 
-	url, err := clients.ResolvePath(c.BaseUrl, "cms/v1/ca-certificates")
+	url := clients.ResolvePath(c.BaseURL, "cms/v1/ca-certificates")
 	req, _ := http.NewRequest(http.MethodGet, url, nil)
 	req.Header.Set("Accept", "application/x-pem-file")
 	rsp, err := c.httpClient().Do(req)
@@ -45,7 +51,7 @@ func (c *Client) GetRootCA() (string, error) {
 
 func (c *Client) PostCSR(csr []byte) (string, error) {
 
-	url, err := clients.ResolvePath(c.BaseUrl, "cms/v1/certificates")
+	url := clients.ResolvePath(c.BaseURL, "cms/v1/certificates")
 	req, _ := http.NewRequest(http.MethodPost, url, bytes.NewBuffer(csr))
 
 	req.Header.Set("Accept", "application/x-pem-file")

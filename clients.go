@@ -1,12 +1,32 @@
 package clients
 
-import "net/url"
+import (
+	"crypto/tls"
+	"fmt"
+	"net/http"
+)
 
-func ResolvePath(baseURLIn, path string) (string, error) {
-	baseURL, err := url.Parse(baseURLIn)
-	if err != nil {
-		return "", err
+type HTTPClientErr struct {
+	ErrMessage string
+	ErrCode    int
+}
+
+func (ucErr *HTTPClientErr) Error() string {
+	return fmt.Sprintf("%s: http status %d", ucErr.ErrMessage, ucErr.ErrCode)
+}
+
+func HTTPClient() *http.Client {
+	return &http.Client{}
+}
+
+func HTTPClientTLSNoVerify() *http.Client {
+	return &http.Client{
+		Transport: &http.Transport{
+			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+		},
 	}
-	rel := baseURL.ResolveReference(&url.URL{Path: path})
-	return rel.String(), err
+}
+
+func ResolvePath(baseURL, path string) string {
+	return baseURL + "/" + path
 }
