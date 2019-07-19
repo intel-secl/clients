@@ -7,7 +7,7 @@ import (
 
 func TestJWT(t *testing.T) {
 
-	jwt := NewJWTClient("https://10.105.168.81:8443/aas", true)
+	jwt := NewJWTClient("https://10.105.168.81:8443/aas")
 
 	cert, certErr := jwt.GetJWTSigningCert()
 	fmt.Println(cert, certErr)
@@ -63,7 +63,7 @@ func TestJWT(t *testing.T) {
 		fmt.Println("err: ", err.Error())
 	}
 
-	jwt404 := NewJWTClient("https://10.105.168.81:8443/abc", true)
+	jwt404 := NewJWTClient("https://10.105.168.81:8443/abc")
 	_, err = jwt404.GetJWTSigningCert()
 	if err != nil {
 		fmt.Println(err == ErrHTTPGetJWTCert)
