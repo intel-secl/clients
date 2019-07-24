@@ -5,6 +5,7 @@ import (
 	"testing"
 )
 
+// Run with command: go test -count=1 -v <filenames>
 func TestJWT(t *testing.T) {
 
 	jwt := NewJWTClient("https://10.105.168.81:8443/aas")
