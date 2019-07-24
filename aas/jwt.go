@@ -40,25 +40,16 @@ var (
 )
 
 type jwtClient struct {
-	BaseURL        string
-	NoTLSKeyVerify bool
+	BaseURL    string
+	HTTPClient *http.Client
 
-	httpClientP *http.Client
-	users       map[string]*types.UserCred
-	tokens      map[string][]byte
+	users  map[string]*types.UserCred
+	tokens map[string][]byte
 }
 
-func NewJWTClient(url string, veryTLSKey bool) *jwtClient {
+func NewJWTClient(url string) *jwtClient {
 
-	ret := jwtClient{
-		BaseURL:        url,
-		NoTLSKeyVerify: veryTLSKey,
-	}
-	if veryTLSKey {
-		ret.httpClientP = clients.HTTPClientTLSNoVerify()
-	} else {
-		ret.httpClientP = clients.HTTPClient()
-	}
+	ret := jwtClient{BaseURL: url}
 	ret.users = make(map[string]*types.UserCred)
 	ret.tokens = make(map[string][]byte)
 	return &ret
@@ -70,7 +61,10 @@ func (c *jwtClient) GetJWTSigningCert() ([]byte, error) {
 	req, _ := http.NewRequest(http.MethodGet, jwtCertUrl, nil)
 	req.Header.Set("Accept", "application/x-pem-file")
 
-	rsp, err := c.httpClientP.Do(req)
+	if c.HTTPClient == nil {
+		c.HTTPClient = clients.HTTPClientTLSNoVerify()
+	}
+	rsp, err := c.HTTPClient.Do(req)
 	if err != nil {
 		return nil, err
 	}
@@ -141,7 +135,10 @@ func (c *jwtClient) fetchToken(userCred *types.UserCred) ([]byte, error) {
 	req, _ := http.NewRequest("POST", jwtUrl, buf)
 	req.Header.Set("Accept", "application/jwt")
 
-	rsp, err := c.httpClientP.Do(req)
+	if c.HTTPClient == nil {
+		c.HTTPClient = clients.HTTPClientTLSNoVerify()
+	}
+	rsp, err := c.HTTPClient.Do(req)
 	if err != nil {
 		return nil, err
 	}
