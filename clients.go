@@ -32,7 +32,6 @@ func HTTPClientTLSNoVerify() *http.Client {
 }
 
 func HTTPClientWithCADir(caDir string) (*http.Client, error) {
-
 	rootCAs, _ := x509.SystemCertPool()
 	if rootCAs == nil {
 		rootCAs = x509.NewCertPool()
@@ -62,5 +61,15 @@ func HTTPClientWithCADir(caDir string) (*http.Client, error) {
 }
 
 func ResolvePath(baseURL, path string) string {
+	if baseURL == "" ||
+		path == "" {
+		return ""
+	}
+	if baseURL[len(baseURL)-1:] == "/" {
+		baseURL = baseURL[:len(baseURL)-1]
+	}
+	if path[:1] == "/" {
+		path = path[1:]
+	}
 	return baseURL + "/" + path
 }
