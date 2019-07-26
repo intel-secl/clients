@@ -4,7 +4,8 @@ import (
 	"bytes"
 	"encoding/json"
 	"net/http"
-
+	"io/ioutil"
+	"fmt"
 	"intel/isecl/lib/clients"
 	types "intel/isecl/lib/common/types/aas"
 )
@@ -90,9 +91,10 @@ func (c *Client) CreateRole(r types.RoleCreate) (*types.RoleCreateResponse, erro
 	if err != nil {
 		return nil, err
 	}
+	msg, _ := ioutil.ReadAll(rsp.Body)
 	if rsp.StatusCode != http.StatusCreated {
 		ErrHTTPCreateRole.ErrCode = rsp.StatusCode
-		return nil, ErrHTTPCreateRole
+		return nil, fmt.Errorf("Failed to create role: HTTP Code: %d: Response Message: %s", ErrHTTPCreateRole.ErrCode, msg)
 	}
 	var roleCreateResponse types.RoleCreateResponse
 	err = json.NewDecoder(rsp.Body).Decode(&roleCreateResponse)

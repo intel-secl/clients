@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strings"
 )
 
 type HTTPClientErr struct {
@@ -65,11 +66,8 @@ func ResolvePath(baseURL, path string) string {
 		path == "" {
 		return ""
 	}
-	if baseURL[len(baseURL)-1:] == "/" {
-		baseURL = baseURL[:len(baseURL)-1]
-	}
-	if path[:1] == "/" {
-		path = path[1:]
-	}
-	return baseURL + "/" + path
+	if strings.HasSuffix(baseURL, "/") {
+                return baseURL + path
+        }
+	return baseURL +"/" + path
 }
