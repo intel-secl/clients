@@ -13,11 +13,12 @@ import (
 
 type HTTPClientErr struct {
 	ErrMessage string
-	ErrCode    int
+	RetCode    int
+	RetMessage string
 }
 
 func (ucErr *HTTPClientErr) Error() string {
-	return fmt.Sprintf("%s: http status %d", ucErr.ErrMessage, ucErr.ErrCode)
+	return fmt.Sprintf("%s: %d: %s", ucErr.ErrMessage, ucErr.RetCode, ucErr.RetMessage)
 }
 
 func HTTPClient() *http.Client {
@@ -67,7 +68,10 @@ func ResolvePath(baseURL, path string) string {
 		return ""
 	}
 	if strings.HasSuffix(baseURL, "/") {
-                return baseURL + path
-        }
-	return baseURL +"/" + path
+		baseURL = baseURL[:len(baseURL)-1]
+	}
+	if strings.HasPrefix(path, "/") {
+		path = path[1:]
+	}
+	return baseURL + "/" + path
 }

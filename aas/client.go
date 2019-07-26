@@ -3,11 +3,10 @@ package aas
 import (
 	"bytes"
 	"encoding/json"
-	"net/http"
-	"io/ioutil"
-	"fmt"
 	"intel/isecl/lib/clients"
 	types "intel/isecl/lib/common/types/aas"
+	"io/ioutil"
+	"net/http"
 )
 
 type Client struct {
@@ -19,15 +18,12 @@ type Client struct {
 var (
 	ErrHTTPCreateUser = &clients.HTTPClientErr{
 		ErrMessage: "Failed to create user",
-		ErrCode:    0,
 	}
 	ErrHTTPCreateRole = &clients.HTTPClientErr{
 		ErrMessage: "Failed to create role",
-		ErrCode:    0,
 	}
 	ErrHTTPAddRoleToUser = &clients.HTTPClientErr{
 		ErrMessage: "Failed to add role to user",
-		ErrCode:    0,
 	}
 )
 
@@ -59,7 +55,7 @@ func (c *Client) CreateUser(u types.UserCreate) (*types.UserCreateResponse, erro
 		return nil, err
 	}
 	if rsp.StatusCode != http.StatusOK {
-		ErrHTTPCreateUser.ErrCode = rsp.StatusCode
+		ErrHTTPCreateUser.RetCode = rsp.StatusCode
 		return nil, ErrHTTPCreateUser
 	}
 	var userCreateResponse types.UserCreateResponse
@@ -93,8 +89,9 @@ func (c *Client) CreateRole(r types.RoleCreate) (*types.RoleCreateResponse, erro
 	}
 	msg, _ := ioutil.ReadAll(rsp.Body)
 	if rsp.StatusCode != http.StatusCreated {
-		ErrHTTPCreateRole.ErrCode = rsp.StatusCode
-		return nil, fmt.Errorf("Failed to create role: HTTP Code: %d: Response Message: %s", ErrHTTPCreateRole.ErrCode, msg)
+		ErrHTTPCreateRole.RetCode = rsp.StatusCode
+		ErrHTTPCreateRole.RetMessage = string(msg)
+		return nil, ErrHTTPCreateRole
 	}
 	var roleCreateResponse types.RoleCreateResponse
 	err = json.NewDecoder(rsp.Body).Decode(&roleCreateResponse)
@@ -123,7 +120,7 @@ func (c *Client) AddRoleToUser(userID string, r types.UserRoleCreate) error {
 	}
 	rsp, err := c.HTTPClient.Do(req)
 	if rsp.StatusCode != http.StatusOK {
-		ErrHTTPAddRoleToUser.ErrCode = rsp.StatusCode
+		ErrHTTPAddRoleToUser.RetCode = rsp.StatusCode
 		return ErrHTTPAddRoleToUser
 	}
 	return nil
