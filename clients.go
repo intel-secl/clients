@@ -8,15 +8,17 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strings"
 )
 
 type HTTPClientErr struct {
 	ErrMessage string
-	ErrCode    int
+	RetCode    int
+	RetMessage string
 }
 
 func (ucErr *HTTPClientErr) Error() string {
-	return fmt.Sprintf("%s: http status %d", ucErr.ErrMessage, ucErr.ErrCode)
+	return fmt.Sprintf("%s: %d: %s", ucErr.ErrMessage, ucErr.RetCode, ucErr.RetMessage)
 }
 
 func HTTPClient() *http.Client {
@@ -65,10 +67,10 @@ func ResolvePath(baseURL, path string) string {
 		path == "" {
 		return ""
 	}
-	if baseURL[len(baseURL)-1:] == "/" {
+	if strings.HasSuffix(baseURL, "/") {
 		baseURL = baseURL[:len(baseURL)-1]
 	}
-	if path[:1] == "/" {
+	if strings.HasPrefix(path, "/") {
 		path = path[1:]
 	}
 	return baseURL + "/" + path

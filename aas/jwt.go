@@ -23,11 +23,9 @@ func (ucErr *JWTClientErr) Error() string {
 var (
 	ErrHTTPGetJWTCert = &clients.HTTPClientErr{
 		ErrMessage: "Failed to retrieve JWT signing certificate",
-		ErrCode:    0,
 	}
 	ErrHTTPFetchJWTToken = &clients.HTTPClientErr{
 		ErrMessage: "Failed to retrieve JWT token from aas",
-		ErrCode:    0,
 	}
 	ErrUserNotFound = &JWTClientErr{
 		ErrMessage: "User name not registered",
@@ -69,7 +67,7 @@ func (c *jwtClient) GetJWTSigningCert() ([]byte, error) {
 		return nil, err
 	}
 	if rsp.StatusCode != http.StatusOK {
-		ErrHTTPGetJWTCert.ErrCode = rsp.StatusCode
+		ErrHTTPGetJWTCert.RetCode = rsp.StatusCode
 		return nil, ErrHTTPGetJWTCert
 	}
 	return ioutil.ReadAll(rsp.Body)
@@ -143,7 +141,7 @@ func (c *jwtClient) fetchToken(userCred *types.UserCred) ([]byte, error) {
 		return nil, err
 	}
 	if rsp.StatusCode != http.StatusOK {
-		ErrHTTPFetchJWTToken.ErrCode = rsp.StatusCode
+		ErrHTTPFetchJWTToken.RetCode = rsp.StatusCode
 		return nil, ErrHTTPFetchJWTToken
 	}
 	jwtToken, err := ioutil.ReadAll(rsp.Body)
