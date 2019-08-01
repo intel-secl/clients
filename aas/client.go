@@ -7,6 +7,7 @@ import (
 	types "intel/isecl/lib/common/types/aas"
 	"io/ioutil"
 	"net/http"
+	log "github.com/sirupsen/logrus"
 )
 
 type Client struct {
@@ -91,11 +92,13 @@ func (c *Client) CreateRole(r types.RoleCreate) (*types.RoleCreateResponse, erro
 	if rsp.StatusCode != http.StatusCreated {
 		ErrHTTPCreateRole.RetCode = rsp.StatusCode
 		ErrHTTPCreateRole.RetMessage = string(msg)
+		log.Errorf("Role not created. http errorcode : %d, message: %s", ErrHTTPCreateRole.RetCode, ErrHTTPCreateRole.RetMessage )
 		return nil, ErrHTTPCreateRole
 	}
 	var roleCreateResponse types.RoleCreateResponse
-	err = json.NewDecoder(rsp.Body).Decode(&roleCreateResponse)
+	err = json.Unmarshal(msg, &roleCreateResponse)
 	if err != nil {
+		log.WithError(err).Error("CreateRole could not decode response")
 		return nil, err
 	}
 	return &roleCreateResponse, nil
