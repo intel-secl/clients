@@ -62,7 +62,10 @@ func (c *Client) PostCSR(csr []byte) (string, error) {
 	req.Header.Set("Content-Type", "application/x-pem-file")
 
 	req.Header.Add("Authorization", "Bearer "+string(c.JWTToken))
-	rsp, err := c.httpClient().Do(req)
+	if c.HTTPClient == nil {
+		return "", errors.New("jwtClient.GetJWTSigningCert: HTTPClient should not be null")
+	}
+	rsp, err := c.HTTPClient.Do(req)
 	if err != nil {
 		return "", err
 	}
