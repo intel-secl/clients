@@ -7,6 +7,7 @@ package aas
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -64,7 +65,7 @@ func (c *jwtClient) GetJWTSigningCert() ([]byte, error) {
 	req.Header.Set("Accept", "application/x-pem-file")
 
 	if c.HTTPClient == nil {
-		c.HTTPClient = clients.HTTPClientTLSNoVerify()
+		return nil, errors.New("jwtClient.GetJWTSigningCert: HTTPClient should not be null")
 	}
 	rsp, err := c.HTTPClient.Do(req)
 	if err != nil {
@@ -138,7 +139,7 @@ func (c *jwtClient) fetchToken(userCred *types.UserCred) ([]byte, error) {
 	req.Header.Set("Accept", "application/jwt")
 
 	if c.HTTPClient == nil {
-		c.HTTPClient = clients.HTTPClientTLSNoVerify()
+		return nil, errors.New("jwtClient.fetchToken: HTTPClient should not be null")
 	}
 	rsp, err := c.HTTPClient.Do(req)
 	if err != nil {

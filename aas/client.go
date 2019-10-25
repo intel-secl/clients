@@ -7,10 +7,12 @@ package aas
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"intel/isecl/lib/clients"
 	types "intel/isecl/lib/common/types/aas"
 	"io/ioutil"
 	"net/http"
+
 	log "github.com/sirupsen/logrus"
 )
 
@@ -53,7 +55,8 @@ func (c *Client) CreateUser(u types.UserCreate) (*types.UserCreateResponse, erro
 	c.prepReqHeader(req)
 
 	if c.HTTPClient == nil {
-		c.HTTPClient = clients.HTTPClientTLSNoVerify()
+		// c.HTTPClient = clients.HTTPClientTLSNoVerify()
+		return nil, errors.New("jwtClient.GetJWTSigningCert: HTTPClient should not be null")
 	}
 	rsp, err := c.HTTPClient.Do(req)
 	if err != nil {
@@ -86,7 +89,8 @@ func (c *Client) CreateRole(r types.RoleCreate) (*types.RoleCreateResponse, erro
 	c.prepReqHeader(req)
 
 	if c.HTTPClient == nil {
-		c.HTTPClient = clients.HTTPClientTLSNoVerify()
+		// c.HTTPClient = clients.HTTPClientTLSNoVerify()
+		return nil, errors.New("jwtClient.GetJWTSigningCert: HTTPClient should not be null")
 	}
 	rsp, err := c.HTTPClient.Do(req)
 	if err != nil {
@@ -96,7 +100,7 @@ func (c *Client) CreateRole(r types.RoleCreate) (*types.RoleCreateResponse, erro
 	if rsp.StatusCode != http.StatusCreated {
 		ErrHTTPCreateRole.RetCode = rsp.StatusCode
 		ErrHTTPCreateRole.RetMessage = string(msg)
-		log.Errorf("Role not created. http errorcode : %d, message: %s", ErrHTTPCreateRole.RetCode, ErrHTTPCreateRole.RetMessage )
+		log.Errorf("Role not created. http errorcode : %d, message: %s", ErrHTTPCreateRole.RetCode, ErrHTTPCreateRole.RetMessage)
 		return nil, ErrHTTPCreateRole
 	}
 	var roleCreateResponse types.RoleCreateResponse
@@ -123,7 +127,8 @@ func (c *Client) AddRoleToUser(userID string, r types.UserRoleCreate) error {
 	c.prepReqHeader(req)
 
 	if c.HTTPClient == nil {
-		c.HTTPClient = clients.HTTPClientTLSNoVerify()
+		// c.HTTPClient = clients.HTTPClientTLSNoVerify()
+		return errors.New("jwtClient.GetJWTSigningCert: HTTPClient should not be null")
 	}
 	rsp, err := c.HTTPClient.Do(req)
 	if rsp.StatusCode != http.StatusOK {
