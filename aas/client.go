@@ -12,6 +12,7 @@ import (
 	types "intel/isecl/lib/common/types/aas"
 	"io/ioutil"
 	"net/http"
+	"net/url"
 
 	log "github.com/sirupsen/logrus"
 )
@@ -31,6 +32,15 @@ var (
 	}
 	ErrHTTPAddRoleToUser = &clients.HTTPClientErr{
 		ErrMessage: "Failed to add role to user",
+	}
+	ErrHTTPUpdateUser = &clients.HTTPClientErr{
+		ErrMessage: "Failed to update user",
+	}
+	ErrHTTPGetUsers = &clients.HTTPClientErr{
+		ErrMessage: "Failed to get user",
+	}
+	ErrHTTPGetRoles = &clients.HTTPClientErr{
+		ErrMessage: "Failed to get roles",
 	}
 )
 
@@ -55,14 +65,13 @@ func (c *Client) CreateUser(u types.UserCreate) (*types.UserCreateResponse, erro
 	c.prepReqHeader(req)
 
 	if c.HTTPClient == nil {
-		// c.HTTPClient = clients.HTTPClientTLSNoVerify()
-		return nil, errors.New("jwtClient.GetJWTSigningCert: HTTPClient should not be null")
+		return nil, errors.New("aasClient.CreateUser: HTTPClient should not be null")
 	}
 	rsp, err := c.HTTPClient.Do(req)
 	if err != nil {
 		return nil, err
 	}
-	if rsp.StatusCode != http.StatusOK {
+	if rsp.StatusCode != http.StatusCreated {
 		ErrHTTPCreateUser.RetCode = rsp.StatusCode
 		return nil, ErrHTTPCreateUser
 	}
@@ -72,6 +81,44 @@ func (c *Client) CreateUser(u types.UserCreate) (*types.UserCreateResponse, erro
 		return nil, err
 	}
 	return &userCreateResponse, nil
+}
+
+func (c *Client) GetUsers(name string) ([]types.UserCreateResponse, error) {
+
+	relativeUrl := "users"
+	u, _ := url.Parse(relativeUrl)
+	queryString := u.Query()
+	if name != "" {
+		queryString.Set("name", name)
+	}
+	
+	u.RawQuery = queryString.Encode()
+
+	userURL := clients.ResolvePath(c.BaseURL, u.ResolveReference(u).String())
+
+	req, err := http.NewRequest(http.MethodGet, userURL, nil)
+	if err != nil {
+		return nil, err
+	}
+	c.prepReqHeader(req)
+
+	if c.HTTPClient == nil {
+		return nil, errors.New("aasClient.GetUsers: HTTPClient should not be null")
+	}
+	rsp, err := c.HTTPClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	if rsp.StatusCode != http.StatusOK {
+		ErrHTTPGetUsers.RetCode = rsp.StatusCode
+		return nil, ErrHTTPGetUsers
+	}
+	var users []types.UserCreateResponse
+	err = json.NewDecoder(rsp.Body).Decode(&users)
+	if err != nil {
+		return nil, err
+	}
+	return users, nil
 }
 
 func (c *Client) CreateRole(r types.RoleCreate) (*types.RoleCreateResponse, error) {
@@ -89,8 +136,7 @@ func (c *Client) CreateRole(r types.RoleCreate) (*types.RoleCreateResponse, erro
 	c.prepReqHeader(req)
 
 	if c.HTTPClient == nil {
-		// c.HTTPClient = clients.HTTPClientTLSNoVerify()
-		return nil, errors.New("jwtClient.GetJWTSigningCert: HTTPClient should not be null")
+		return nil, errors.New("aasClient.CreateRole: HTTPClient should not be null")
 	}
 	rsp, err := c.HTTPClient.Do(req)
 	if err != nil {
@@ -112,9 +158,86 @@ func (c *Client) CreateRole(r types.RoleCreate) (*types.RoleCreateResponse, erro
 	return &roleCreateResponse, nil
 }
 
-func (c *Client) AddRoleToUser(userID string, r types.UserRoleCreate) error {
+func (c *Client) GetRoles(service, name, context, contextContains string, allContexts bool) ([]types.RoleCreateResponse, error) {
 
-	userRoleURL := clients.ResolvePath(c.BaseURL, "users"+userID+"roles")
+	relativeUrl := "roles"
+	u, _ := url.Parse(relativeUrl)
+	queryString := u.Query()
+	if service != "" {
+		queryString.Set("service", service)
+	}
+	if name != "" {
+		queryString.Set("name", name)
+	}
+	if context != "" {
+		queryString.Set("context", context)
+	}
+	if contextContains != "" {
+		queryString.Set("contextContains", contextContains)
+	}
+	if allContexts {
+		queryString.Set("allContexts", "true")
+	} else {
+		queryString.Set("allContexts", "false")
+	}
+	
+	u.RawQuery = queryString.Encode()
+
+	rolesURL := clients.ResolvePath(c.BaseURL, u.ResolveReference(u).String())
+
+	req, err := http.NewRequest(http.MethodGet, rolesURL, nil)
+	if err != nil {
+		return nil, err
+	}
+	c.prepReqHeader(req)
+
+	if c.HTTPClient == nil {
+		return nil, errors.New("aasClient.GetRoles: HTTPClient should not be null")
+	}
+	rsp, err := c.HTTPClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	if rsp.StatusCode != http.StatusOK {
+		ErrHTTPGetRoles.RetCode = rsp.StatusCode
+		return nil, ErrHTTPCreateUser
+	}
+	var roles []types.RoleCreateResponse
+	err = json.NewDecoder(rsp.Body).Decode(&roles)
+	if err != nil {
+		return nil, err
+	}
+	return roles, nil
+}
+
+func (c *Client) UpdateUser(userID string, user types.UserCreate) error {
+
+	userRoleURL := clients.ResolvePath(c.BaseURL, "users/"+userID)
+
+	payload, err := json.Marshal(&user)
+	if err != nil {
+		return err
+	}
+	req, err := http.NewRequest(http.MethodPatch, userRoleURL, bytes.NewBuffer(payload))
+	if err != nil {
+		return err
+	}
+	c.prepReqHeader(req)
+
+	if c.HTTPClient == nil {
+		return errors.New("aaClient.UpdateUser: HTTPClient should not be null")
+	}
+	rsp, err := c.HTTPClient.Do(req)
+	if rsp.StatusCode != http.StatusOK {
+		ErrHTTPUpdateUser.RetCode = rsp.StatusCode
+		return ErrHTTPUpdateUser
+	}
+	return nil
+}
+
+func (c *Client) AddRoleToUser(userID string, r types.RoleIDs) error {
+
+	userRoleURL := clients.ResolvePath(c.BaseURL, "users/"+userID+"/roles")
 
 	payload, err := json.Marshal(&r)
 	if err != nil {
@@ -127,11 +250,10 @@ func (c *Client) AddRoleToUser(userID string, r types.UserRoleCreate) error {
 	c.prepReqHeader(req)
 
 	if c.HTTPClient == nil {
-		// c.HTTPClient = clients.HTTPClientTLSNoVerify()
-		return errors.New("jwtClient.GetJWTSigningCert: HTTPClient should not be null")
+		return errors.New("aaClient.AddRoleToUser: HTTPClient should not be null")
 	}
 	rsp, err := c.HTTPClient.Do(req)
-	if rsp.StatusCode != http.StatusOK {
+	if rsp.StatusCode != http.StatusCreated {
 		ErrHTTPAddRoleToUser.RetCode = rsp.StatusCode
 		return ErrHTTPAddRoleToUser
 	}
