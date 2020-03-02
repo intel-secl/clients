@@ -12,7 +12,7 @@ import (
 // Run with command: go test -count=1 -v <filenames>
 func TestJWT(t *testing.T) {
 
-	jwt := NewJWTClient("https://10.105.168.81:8443/aas")
+	jwt := NewJWTClient("https://url.to.aas.instance:port/aas")
 
 	cert, certErr := jwt.GetJWTSigningCert()
 	fmt.Println(cert, certErr)
@@ -68,7 +68,7 @@ func TestJWT(t *testing.T) {
 		fmt.Println("err: ", err.Error())
 	}
 
-	jwt404 := NewJWTClient("https://10.105.168.81:8443/abc")
+	jwt404 := NewJWTClient("https://url.to.aas.instance:port/abc")
 	_, err = jwt404.GetJWTSigningCert()
 	if err != nil {
 		fmt.Println(err == ErrHTTPGetJWTCert)

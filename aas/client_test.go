@@ -12,11 +12,12 @@ import (
 )
 
 // Run with command: go test -count=1 -v <filenames>
+// insert the url to a working aas instance to "aasURL" variable
 func TestAASClient(t *testing.T) {
 
 	var token []byte
 	var err error
-	aasURL := "https://10.105.168.81:8443/aas"
+	aasURL := "https://url.to.aas.instance:port/aas"
 
 	// get token of aas admin
 	jwt := NewJWTClient(aasURL)
