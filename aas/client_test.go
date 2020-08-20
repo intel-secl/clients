@@ -8,7 +8,7 @@ import (
 	"fmt"
 	"testing"
 
-	types "intel/isecl/lib/common/v2/types/aas"
+	types "intel/isecl/lib/common/v3/types/aas"
 )
 
 // Run with command: go test -count=1 -v <filenames>
