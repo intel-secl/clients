@@ -6,6 +6,8 @@ package aas
 
 import (
 	"fmt"
+	"github.com/stretchr/testify/assert"
+	"net/http"
 	"testing"
 
 	types "intel/isecl/lib/common/v3/types/aas"
@@ -17,33 +19,36 @@ func TestAASClient(t *testing.T) {
 
 	var token []byte
 	var err error
-	aasURL := "https://url.to.aas.instance:port/aas"
+
+	aasMockSrv, port := aasMockServer(t)
+	defer aasMockSrv.Close()
+
+	aasURL := "http://localhost" + port + "/aas"
 
 	// get token of aas admin
 	jwt := NewJWTClient(aasURL)
+	jwt.HTTPClient = http.DefaultClient
 	jwt.AddUser("admin", "password")
 	err = jwt.FetchAllTokens()
-	if err != nil {
-		fmt.Println("err: ", err.Error())
-	}
+
+	assert.NoError(t, err, "All user tokens should be fetched")
+
 	token, err = jwt.GetUserToken("admin")
 	fmt.Println("token: ", string(token))
-	if err != nil {
-		fmt.Println("err: ", err.Error())
-	}
+
+	assert.NoError(t, err, "admin token should be fetched")
 
 	aasClient := Client{
 		BaseURL:  aasURL,
 		JWTToken: token,
 	}
+	aasClient.HTTPClient = http.DefaultClient
 	role := types.RoleCreate{
-		Service: "test_service",
-		Name:    "test_name",
+		RoleInfo: types.RoleInfo{
+			Service: "test_service",
+			Name:    "test_name",
+		},
 	}
-	resp, err := aasClient.CreateRole(role)
-	if err == nil {
-		fmt.Println(resp)
-	} else {
-		fmt.Println(err)
-	}
+	_, err = aasClient.CreateRole(role)
+	assert.NoError(t, err, "role should be created")
 }
