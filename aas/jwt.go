@@ -60,8 +60,11 @@ func NewJWTClient(url string) *jwtClient {
 
 func (c *jwtClient) GetJWTSigningCert() ([]byte, error) {
 
-	jwtCertUrl := clients.ResolvePath(c.BaseURL, "noauth/jwtCert")
-	req, _ := http.NewRequest(http.MethodGet, jwtCertUrl, nil)
+	jwtCertUrl := clients.ResolvePath(c.BaseURL, "noauth/jwt-certificates")
+	req, err := http.NewRequest(http.MethodGet, jwtCertUrl, nil)
+	if err != nil {
+		return nil, errors.New("jwtClient.GetJWTSigningCert: failed initializing HTTP request: " + err.Error())
+	}
 	req.Header.Set("Accept", "application/x-pem-file")
 
 	if c.HTTPClient == nil {
@@ -135,7 +138,10 @@ func (c *jwtClient) fetchToken(userCred *types.UserCred) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	req, _ := http.NewRequest("POST", jwtUrl, buf)
+	req, err := http.NewRequest("POST", jwtUrl, buf)
+	if err != nil {
+		return nil, errors.New("jwtClient.fetchToken: failed initializing HTTP request: " + err.Error())
+	}
 	req.Header.Set("Accept", "application/jwt")
 
 	if c.HTTPClient == nil {
