@@ -30,9 +30,12 @@ func HTTPClient() *http.Client {
 }
 
 func HTTPClientTLSNoVerify() *http.Client {
+	//InsecureSkipVerify is set to true as connection is established from utility script and k8s plugin
 	return &http.Client{
 		Transport: &http.Transport{
-			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+			TLSClientConfig: &tls.Config{
+				MinVersion: tls.VersionTLS12,
+				InsecureSkipVerify: true},
 		},
 	}
 }
@@ -58,6 +61,7 @@ func HTTPClientWithCADir(caDir string) (*http.Client, error) {
 		}
 	}
 	config := &tls.Config{
+		MinVersion: tls.VersionTLS12,
 		InsecureSkipVerify: false,
 		RootCAs:            rootCAs,
 	}
