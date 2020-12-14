@@ -34,7 +34,7 @@ func HTTPClientTLSNoVerify() *http.Client {
 	return &http.Client{
 		Transport: &http.Transport{
 			TLSClientConfig: &tls.Config{
-				MinVersion: tls.VersionTLS12,
+				MinVersion:         tls.VersionTLS12,
 				InsecureSkipVerify: true},
 		},
 	}
@@ -61,7 +61,7 @@ func HTTPClientWithCADir(caDir string) (*http.Client, error) {
 		}
 	}
 	config := &tls.Config{
-		MinVersion: tls.VersionTLS12,
+		MinVersion:         tls.VersionTLS12,
 		InsecureSkipVerify: false,
 		RootCAs:            rootCAs,
 	}
