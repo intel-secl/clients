@@ -11,7 +11,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/gorilla/mux"
 	"github.com/stretchr/testify/assert"
-	types "intel/isecl/lib/common/v4/types/aas"
+	types "intel/isecl/lib/common/v5/types/aas"
 	"net"
 	"net/http"
 	"testing"

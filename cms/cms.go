@@ -8,7 +8,7 @@ import (
 	"bytes"
 	"crypto/tls"
 	"errors"
-	"intel/isecl/lib/clients/v4"
+	"intel/isecl/lib/clients/v5"
 	"net/http"
 )
 

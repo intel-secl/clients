@@ -10,7 +10,7 @@ import (
 	"net/http"
 	"testing"
 
-	types "intel/isecl/lib/common/v4/types/aas"
+	types "intel/isecl/lib/common/v5/types/aas"
 )
 
 // Run with command: go test -count=1 -v <filenames>
