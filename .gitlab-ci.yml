@@ -1,4 +1,4 @@
-image: golang:1.14
+image: golang:1.16
 
 before_script:
 
@@ -23,6 +23,7 @@ test:
   tags:
     - go
   script:
+    - GOOS=linux GOSUMDB=off GOPROXY=direct go mod tidy
     - GOPROXY=direct GOSUMDB=off go test ./... -cover
 
 compile:
@@ -30,4 +31,5 @@ compile:
   tags:
     - go
   script:
+    - GOOS=linux GOSUMDB=off GOPROXY=direct go mod tidy
     - GOPROXY=direct GOSUMDB=off go build ./...
