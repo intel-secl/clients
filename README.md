@@ -1,6 +1,6 @@
 # clients
 
-This repository is for holding all client codes to micro services.
+This repository is for holding all client codes to micro services. 
 
 Please implement the client code of future services in this repo, \
 and the process of moving existing client into this repo is being carried on.
